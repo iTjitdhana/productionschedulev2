@@ -51,12 +51,36 @@ check_port() {
     local port=$1
     local service=$2
     
-    if netstat -tuln | grep -q ":$port "; then
-        echo -e "${YELLOW}⚠️  Port $port is already in use. Please stop the service using this port.${NC}"
-        echo "To check what's using the port: sudo netstat -tulpn | grep :$port"
-        return 1
+    # Try multiple methods to check port availability
+    if command -v netstat >/dev/null 2>&1; then
+        if netstat -tuln | grep -q ":$port "; then
+            echo -e "${YELLOW}⚠️  Port $port is already in use. Please stop the service using this port.${NC}"
+            echo "To check what's using the port: sudo netstat -tulpn | grep :$port"
+            return 1
+        else
+            echo -e "${GREEN}✅ Port $port is available for $service${NC}"
+            return 0
+        fi
+    elif command -v ss >/dev/null 2>&1; then
+        if ss -tuln | grep -q ":$port "; then
+            echo -e "${YELLOW}⚠️  Port $port is already in use. Please stop the service using this port.${NC}"
+            echo "To check what's using the port: sudo ss -tulpn | grep :$port"
+            return 1
+        else
+            echo -e "${GREEN}✅ Port $port is available for $service${NC}"
+            return 0
+        fi
+    elif command -v lsof >/dev/null 2>&1; then
+        if lsof -i :$port >/dev/null 2>&1; then
+            echo -e "${YELLOW}⚠️  Port $port is already in use. Please stop the service using this port.${NC}"
+            echo "To check what's using the port: sudo lsof -i :$port"
+            return 1
+        else
+            echo -e "${GREEN}✅ Port $port is available for $service${NC}"
+            return 0
+        fi
     else
-        echo -e "${GREEN}✅ Port $port is available for $service${NC}"
+        echo -e "${YELLOW}⚠️  Cannot check port availability (netstat/ss/lsof not found). Continuing...${NC}"
         return 0
     fi
 }
