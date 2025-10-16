@@ -10,6 +10,12 @@ const nextConfig = {
     unoptimized: true,
   },
   output: 'standalone',
+  // Ensure static files are served correctly
+  trailingSlash: false,
+  // Disable image optimization for Docker
+  experimental: {
+    outputFileTracingRoot: undefined,
+  },
 }
 
 export default nextConfig

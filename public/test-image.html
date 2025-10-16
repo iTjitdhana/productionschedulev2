@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Test Images</title>
+</head>
+<body>
+    <h1>Test Static Files</h1>
+    
+    <h2>Placeholder Images:</h2>
+    <img src="/placeholder.svg" alt="Placeholder SVG" style="width: 100px; height: 100px; border: 1px solid #ccc;">
+    <br>
+    <img src="/placeholder.jpg" alt="Placeholder JPG" style="width: 100px; height: 100px; border: 1px solid #ccc;">
+    <br>
+    <img src="/placeholder-user.jpg" alt="Placeholder User" style="width: 100px; height: 100px; border: 1px solid #ccc;">
+    
+    <h2>Logo:</h2>
+    <img src="/images/design-mode/JDN-Logo-PNG.png" alt="JDN Logo" style="width: 200px; height: auto;">
+    
+    <h2>User Images:</h2>
+    <img src="/images/jack.jpg" alt="Jack" style="width: 100px; height: 100px; border: 1px solid #ccc;">
+    <br>
+    <img src="/images/jaran.jpeg" alt="Jaran" style="width: 100px; height: 100px; border: 1px solid #ccc;">
+    
+    <script>
+        // Test if images load
+        document.querySelectorAll('img').forEach(img => {
+            img.onload = () => console.log('✅ Loaded:', img.src);
+            img.onerror = () => console.log('❌ Failed:', img.src);
+        });
+    </script>
+</body>
+</html>
