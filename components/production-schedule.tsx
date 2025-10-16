@@ -513,11 +513,6 @@ export default function ProductionSchedule() {
               placeholder="เลือกวันที่"
             />
           </div>
-          {!loading && (
-            <span className="text-xs text-gray-600 hidden lg:block">
-              แสดงข้อมูล: {productionTasks.length} งาน | {selectedDate}
-            </span>
-          )}
           {SHOW_PRINT_BUTTON && (
             <button
               onClick={() => window.print()}
