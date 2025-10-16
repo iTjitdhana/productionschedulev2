@@ -16,6 +16,8 @@ const nextConfig = {
   experimental: {
     // outputFileTracingRoot: undefined, // Removed - not needed
   },
+  // Allow cross-origin requests from LAN IPs
+  allowedDevOrigins: ['192.168.0.139'],
 }
 
 export default nextConfig
