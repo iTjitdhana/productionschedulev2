@@ -718,8 +718,13 @@ export default function ProductionSchedule() {
                             // มี steps: แสดงแท่งแบ่งเป็นส่วนๆ ตาม percentage
                             const { start: taskStart, end: taskEnd } = getGridColumnSpan(task.start_time, task.end_time)
                             const taskDurationMinutes = timeToMinutes(task.end_time) - timeToMinutes(task.start_time)
-                            // ใช้สีตาม category ของแต่ละขั้นตอน
-                            const stepColors = task.steps.map(step => getStepBackgroundClass(step.process_description, task.color))
+                            // ใช้สีตาม category ของแต่ละขั้นตอน (เฉพาะ 2 ขั้นตอนสุดท้าย)
+                            const stepColors = task.steps.map((step, index) => {
+                              const isLastTwoSteps = index >= task.steps.length - 2
+                              return isLastTwoSteps 
+                                ? getStepBackgroundClass(step.process_description, task.color)
+                                : task.color
+                            })
                             
                             // Debug: เช็คว่าเวลาเริ่มตรงกัน
                             const calculatedStartMinutes = START_TIME + ((taskStart - 1) * MINUTES_PER_GRID_UNIT)
