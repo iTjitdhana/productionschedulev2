@@ -2,6 +2,7 @@
 import { useState, useEffect, useRef } from "react"
 import * as XLSX from "xlsx"
 import { Clock, ChevronRight, Loader2, AlertCircle, RefreshCw } from "lucide-react"
+import { SimpleDatePicker } from "@/components/ui/simple-date-picker"
 import { fetchWorkPlans } from "@/lib/api"
 import type { WorkPlanResponse } from "@/lib/api"
 import { 
@@ -505,6 +506,13 @@ export default function ProductionSchedule() {
           <h1 className="font-bold text-black text-xl lg:text-2xl">ตารางงานและกระบวนการผลิตสินค้าครัวกลาง</h1>
         </div>
         <div className="flex items-center gap-2">
+          <div className="w-48">
+            <SimpleDatePicker
+              value={new Date(selectedDate)}
+              onChange={(date) => setSelectedDate(date.toISOString().split('T')[0])}
+              placeholder="เลือกวันที่"
+            />
+          </div>
           {!loading && (
             <span className="text-xs text-gray-600 hidden lg:block">
               แสดงข้อมูล: {productionTasks.length} งาน | {selectedDate}
