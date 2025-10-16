@@ -53,7 +53,7 @@ export async function fetchWorkPlans(date: string): Promise<WorkPlan[]> {
       FROM work_plan_operators wpo
       LEFT JOIN users u ON wpo.id_code = u.id_code
       WHERE wpo.work_plan_id IN (?)
-      ORDER BY wpo.work_plan_id, u.name;
+      ORDER BY wpo.work_plan_id, wpo.id;
     `, [workPlanIds]);
 
     // Debug: Log operator data
@@ -182,7 +182,7 @@ export async function fetchWorkPlanById(id: number): Promise<WorkPlan | null> {
       FROM work_plan_operators wpo
       LEFT JOIN users u ON wpo.id_code = u.id_code
       WHERE wpo.work_plan_id = ?
-      ORDER BY u.name;
+      ORDER BY wpo.id;
     `, [id]);
 
     const assignees: Assignee[] = operatorRows.map(op => ({
