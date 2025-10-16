@@ -17,7 +17,7 @@ NC='\033[0m' # No Color
 # Configuration
 FRONTEND_PORT=3017
 BACKEND_PORT=3107
-DB_HOST=192.168.0.96
+DB_HOST=192.168.0.139
 DB_PORT=3306
 SERVER_IP=$(hostname -I | awk '{print $1}')  # Auto-detect server IP
 

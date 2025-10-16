@@ -2,7 +2,7 @@
  * API Client for Production Schedule System
  */
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3107';
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://192.168.0.139:3107';
 const API_PREFIX = '/api';
 
 // Debug: Log API configuration
