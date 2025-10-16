@@ -28,9 +28,9 @@ RUN chown -R nodejs:nodejs /app
 
 USER nodejs
 
-EXPOSE 3105
+EXPOSE 3107
 
-ENV PORT=3105
+ENV PORT=3107
 ENV NODE_ENV=production
 
 # Use node directly with JavaScript files

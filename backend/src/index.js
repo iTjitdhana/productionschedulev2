@@ -7,7 +7,7 @@ dotenv.config();
 
 // Create Express app
 const app = express();
-const PORT = Number(process.env.PORT) || 3105;
+const PORT = Number(process.env.PORT) || 3107;
 const API_PREFIX = process.env.API_PREFIX || '/api';
 
 // Middlewares

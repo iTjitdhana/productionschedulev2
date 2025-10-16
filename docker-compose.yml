@@ -4,7 +4,7 @@ services:
       context: .
       dockerfile: Dockerfile.frontend
     ports:
-      - "3017:3015"
+      - "3017:3017"
     environment:
       - NODE_ENV=production
     restart: unless-stopped
@@ -16,10 +16,10 @@ services:
       context: ./backend
       dockerfile: Dockerfile.js
     ports:
-      - "3107:3105"
+      - "3107:3107"
     environment:
       - NODE_ENV=production
-      - PORT=3105
+      - PORT=3107
       - DB_HOST=192.168.0.139
       - DB_USER=jitdhana
       - DB_PASSWORD=Jitdana@2025
