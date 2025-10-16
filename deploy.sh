@@ -19,11 +19,13 @@ FRONTEND_PORT=3017
 BACKEND_PORT=3107
 DB_HOST=192.168.0.96
 DB_PORT=3306
+SERVER_IP=$(hostname -I | awk '{print $1}')  # Auto-detect server IP
 
 echo -e "${BLUE}📋 Deployment Configuration:${NC}"
 echo "Frontend Port: $FRONTEND_PORT"
 echo "Backend Port: $BACKEND_PORT"
 echo "Database Host: $DB_HOST:$DB_PORT"
+echo "Server IP: $SERVER_IP"
 echo ""
 
 # Check if Docker is installed
@@ -115,8 +117,12 @@ docker compose down --remove-orphans || true
 echo -e "${BLUE}🧹 Cleaning up old images...${NC}"
 docker image prune -f || true
 
+# Export SERVER_IP for docker-compose
+export SERVER_IP
+
 # Build and start containers
 echo -e "${BLUE}🔨 Building and starting containers...${NC}"
+echo -e "${YELLOW}Using SERVER_IP: $SERVER_IP${NC}"
 docker compose up --build -d
 
 # Wait for services to start
@@ -138,14 +144,14 @@ fi
 echo -e "${BLUE}🧪 Testing API endpoints...${NC}"
 
 # Test backend health
-if curl -f http://localhost:$BACKEND_PORT/api/health &> /dev/null; then
+if curl -f http://$SERVER_IP:$BACKEND_PORT/api/health &> /dev/null; then
     echo -e "${GREEN}✅ Backend API is responding${NC}"
 else
     echo -e "${YELLOW}⚠️  Backend API is not responding yet${NC}"
 fi
 
 # Test frontend
-if curl -f http://localhost:$FRONTEND_PORT &> /dev/null; then
+if curl -f http://$SERVER_IP:$FRONTEND_PORT &> /dev/null; then
     echo -e "${GREEN}✅ Frontend is responding${NC}"
 else
     echo -e "${YELLOW}⚠️  Frontend is not responding yet${NC}"
@@ -159,9 +165,9 @@ echo ""
 echo -e "${GREEN}🎉 Deployment completed!${NC}"
 echo ""
 echo -e "${BLUE}📱 Access URLs:${NC}"
-echo "Frontend: http://localhost:$FRONTEND_PORT"
-echo "Backend API: http://localhost:$BACKEND_PORT"
-echo "API Health: http://localhost:$BACKEND_PORT/api/health"
+echo "Frontend: http://$SERVER_IP:$FRONTEND_PORT"
+echo "Backend API: http://$SERVER_IP:$BACKEND_PORT"
+echo "API Health: http://$SERVER_IP:$BACKEND_PORT/api/health"
 echo ""
 echo -e "${BLUE}🔧 Useful Commands:${NC}"
 echo "View logs: docker compose logs -f"
