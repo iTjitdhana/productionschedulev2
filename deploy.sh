@@ -120,10 +120,17 @@ docker image prune -f || true
 # Export SERVER_IP for docker-compose
 export SERVER_IP
 
+# Check for --no-cache flag
+NO_CACHE_FLAG=""
+if [[ "$1" == "--no-cache" ]]; then
+    NO_CACHE_FLAG="--no-cache"
+    echo -e "${YELLOW}⚠️  Building without cache...${NC}"
+fi
+
 # Build and start containers
 echo -e "${BLUE}🔨 Building and starting containers...${NC}"
 echo -e "${YELLOW}Using SERVER_IP: $SERVER_IP${NC}"
-docker compose up --build -d
+docker compose up --build $NO_CACHE_FLAG -d
 
 # Wait for services to start
 echo -e "${BLUE}⏳ Waiting for services to start...${NC}"
