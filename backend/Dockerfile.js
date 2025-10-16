@@ -3,11 +3,18 @@ FROM node:18-alpine
 
 WORKDIR /app
 
+# Install pnpm
+RUN corepack enable pnpm
+
 # Copy package files
-COPY package*.json ./
+COPY package*.json pnpm-lock.yaml* ./
 
 # Install dependencies
-RUN npm ci --only=production
+RUN \
+  if [ -f pnpm-lock.yaml ]; then pnpm i --prod --no-frozen-lockfile; \
+  elif [ -f package-lock.json ]; then npm ci --omit=dev; \
+  else npm install --omit=dev; \
+  fi
 
 # Copy source code
 COPY . .
