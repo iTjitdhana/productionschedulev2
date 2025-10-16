@@ -58,37 +58,37 @@ chmod +x deploy.sh
 ## 🌐 Access URLs
 
 After successful deployment:
-- **Frontend**: http://localhost:3020
-- **Backend API**: http://localhost:3110
-- **API Health Check**: http://localhost:3110/api/health
+- **Frontend**: http://localhost:3017
+- **Backend API**: http://localhost:3107
+- **API Health Check**: http://localhost:3107/api/health
 
 ## 🔧 Management Commands
 
 ### View Logs
 ```bash
 # All services
-docker-compose logs -f
+docker compose logs -f
 
 # Specific service
-docker-compose logs -f frontend
-docker-compose logs -f backend
+docker compose logs -f frontend
+docker compose logs -f backend
 ```
 
 ### Stop Services
 ```bash
-docker-compose down
+docker compose down
 ```
 
 ### Restart Services
 ```bash
-docker-compose restart
+docker compose restart
 ```
 
 ### Update Services
 ```bash
 git pull
-docker-compose down
-docker-compose up --build -d
+docker compose down
+docker compose up --build -d
 ```
 
 ## 🐛 Troubleshooting
@@ -118,11 +118,11 @@ sudo ufw allow 3306
 #### 3. Container Won't Start
 ```bash
 # Check container logs
-docker-compose logs backend
-docker-compose logs frontend
+docker compose logs backend
+docker compose logs frontend
 
 # Check container status
-docker-compose ps
+docker compose ps
 ```
 
 #### 4. Frontend Can't Connect to Backend
@@ -131,7 +131,7 @@ docker-compose ps
 curl http://localhost:3105/api/health
 
 # Check environment variables
-docker-compose exec frontend env | grep API
+docker compose exec frontend env | grep API
 ```
 
 ## 🔒 Security Considerations
@@ -154,10 +154,10 @@ sudo ufw deny 3306/tcp   # MySQL (internal only)
 ### Health Checks
 ```bash
 # API Health
-curl http://localhost:3110/api/health
+curl http://localhost:3107/api/health
 
 # Frontend Health
-curl http://localhost:3020
+curl http://localhost:3017
 
 # Database Health (from server)
 mysql -h 192.168.0.96 -u jitdhana -p -e "SELECT 1;"

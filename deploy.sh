@@ -15,8 +15,8 @@ BLUE='\033[0;34m'
 NC='\033[0m' # No Color
 
 # Configuration
-FRONTEND_PORT=3020
-BACKEND_PORT=3110
+FRONTEND_PORT=3017
+BACKEND_PORT=3107
 DB_HOST=192.168.0.96
 DB_PORT=3306
 
@@ -33,8 +33,14 @@ if ! command -v docker &> /dev/null; then
 fi
 
 # Check if Docker Compose is installed
-if ! command -v docker-compose &> /dev/null; then
-    echo -e "${RED}❌ Docker Compose is not installed. Please install Docker Compose first.${NC}"
+if ! command -v docker &> /dev/null; then
+    echo -e "${RED}❌ Docker is not installed. Please install Docker first.${NC}"
+    exit 1
+fi
+
+# Check if docker compose is available
+if ! docker compose version &> /dev/null; then
+    echo -e "${RED}❌ Docker Compose is not available. Please install Docker Compose first.${NC}"
     exit 1
 fi
 
@@ -79,7 +85,7 @@ fi
 
 # Stop existing containers
 echo -e "${BLUE}🛑 Stopping existing containers...${NC}"
-docker-compose down --remove-orphans || true
+docker compose down --remove-orphans || true
 
 # Remove old images (optional)
 echo -e "${BLUE}🧹 Cleaning up old images...${NC}"
@@ -87,7 +93,7 @@ docker image prune -f || true
 
 # Build and start containers
 echo -e "${BLUE}🔨 Building and starting containers...${NC}"
-docker-compose up --build -d
+docker compose up --build -d
 
 # Wait for services to start
 echo -e "${BLUE}⏳ Waiting for services to start...${NC}"
@@ -95,12 +101,12 @@ sleep 10
 
 # Check if containers are running
 echo -e "${BLUE}🔍 Checking container status...${NC}"
-if docker-compose ps | grep -q "Up"; then
+if docker compose ps | grep -q "Up"; then
     echo -e "${GREEN}✅ Containers are running${NC}"
 else
     echo -e "${RED}❌ Some containers failed to start${NC}"
     echo "Container logs:"
-    docker-compose logs
+    docker compose logs
     exit 1
 fi
 
@@ -123,7 +129,7 @@ fi
 
 # Show container status
 echo -e "${BLUE}📊 Container Status:${NC}"
-docker-compose ps
+docker compose ps
 
 echo ""
 echo -e "${GREEN}🎉 Deployment completed!${NC}"
@@ -134,12 +140,12 @@ echo "Backend API: http://localhost:$BACKEND_PORT"
 echo "API Health: http://localhost:$BACKEND_PORT/api/health"
 echo ""
 echo -e "${BLUE}🔧 Useful Commands:${NC}"
-echo "View logs: docker-compose logs -f"
-echo "Stop services: docker-compose down"
-echo "Restart services: docker-compose restart"
-echo "Update services: docker-compose pull && docker-compose up -d"
+echo "View logs: docker compose logs -f"
+echo "Stop services: docker compose down"
+echo "Restart services: docker compose restart"
+echo "Update services: docker compose pull && docker compose up -d"
 echo ""
 echo -e "${YELLOW}⚠️  Important Notes:${NC}"
 echo "- Make sure MySQL is running on $DB_HOST:$DB_PORT"
 echo "- Check firewall settings for ports $FRONTEND_PORT and $BACKEND_PORT"
-echo "- Monitor logs for any errors: docker-compose logs -f"
+echo "- Monitor logs for any errors: docker compose logs -f"

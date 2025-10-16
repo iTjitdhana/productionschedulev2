@@ -1,15 +1,13 @@
-version: '3.8'
-
 services:
   frontend:
     build:
       context: .
       dockerfile: Dockerfile.frontend
     ports:
-      - "3020:3015"
+      - "3017:3015"
     environment:
       - NODE_ENV=production
-      - NEXT_PUBLIC_API_URL=http://localhost:3110
+      - NEXT_PUBLIC_API_URL=http://localhost:3107
     restart: unless-stopped
     networks:
       - production-network
@@ -19,7 +17,7 @@ services:
       context: ./backend
       dockerfile: Dockerfile.js
     ports:
-      - "3110:3105"
+      - "3107:3105"
     environment:
       - NODE_ENV=production
       - PORT=3105
