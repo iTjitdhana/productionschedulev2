@@ -8,8 +8,6 @@ services:
     environment:
       - NODE_ENV=production
       - NEXT_PUBLIC_API_URL=http://${SERVER_IP:-192.168.0.96}:3107
-    env_file:
-      - env.production
     restart: unless-stopped
     networks:
       - production-network
