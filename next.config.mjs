@@ -14,7 +14,7 @@ const nextConfig = {
   trailingSlash: false,
   // Disable image optimization for Docker
   experimental: {
-    outputFileTracingRoot: undefined,
+    // outputFileTracingRoot: undefined, // Removed - not needed
   },
 }
 

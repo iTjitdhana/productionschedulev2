@@ -2,6 +2,7 @@
  * API Client for Production Schedule System
  */
 
+// Force use correct API URL for production
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://192.168.0.139:3107';
 const API_PREFIX = '/api';
 
