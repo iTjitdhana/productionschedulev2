@@ -5,6 +5,13 @@
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3107';
 const API_PREFIX = '/api';
 
+// Debug: Log API configuration
+console.log('API Configuration:', {
+  NEXT_PUBLIC_API_URL: process.env.NEXT_PUBLIC_API_URL,
+  API_BASE_URL: API_BASE_URL,
+  NODE_ENV: process.env.NODE_ENV
+});
+
 export interface APIResponse<T = any> {
   success: boolean;
   data?: T;
