@@ -7,7 +7,6 @@ services:
       - "3017:3015"
     environment:
       - NODE_ENV=production
-      - NEXT_PUBLIC_API_URL=http://${SERVER_IP:-192.168.0.96}:3107
     restart: unless-stopped
     networks:
       - production-network
