@@ -784,7 +784,7 @@ export default function ProductionSchedule() {
                                           {step.process_description.length > 12 ? step.process_description.substring(0, 12) + '...' : step.process_description}
                                         </span>
                                         <span className="text-[10px] text-black/70 leading-tight mt-0.5 whitespace-nowrap">
-                                          {step.estimated_duration_minutes} นาที
+                                          {formatDuration(step.estimated_duration_minutes)}
                                         </span>
                                       </div>
 
