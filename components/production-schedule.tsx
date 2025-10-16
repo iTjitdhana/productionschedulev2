@@ -791,9 +791,8 @@ export default function ProductionSchedule() {
                                       {hoveredStep?.taskIndex === taskIndex && hoveredStep?.stepIndex === stepIndex && (
                                         <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-3 py-2 bg-white text-black text-sm rounded shadow-lg border border-gray-200 whitespace-nowrap z-50 max-w-xs pointer-events-none">
                                           <div className="font-semibold mb-1">ขั้นตอนที่ {step.process_number}: {step.process_description}</div>
-                                          <div className="text-xs text-gray-600 space-y-1">
-                                            <div>เวลามาตรฐาน: {step.estimated_duration_minutes} นาที ({step.percentage.toFixed(1)}%)</div>
-                                            <div>จำนวนคนมาตรฐาน: {step.standard_worker_count} คน</div>
+                                          <div className="text-xs text-gray-600">
+                                            <div>เวลามาตรฐาน: {formatDuration(step.estimated_duration_minutes)}</div>
                                           </div>
                                           <div className="absolute top-full left-1/2 -translate-x-1/2 -mt-px">
                                             <div className="border-4 border-transparent border-t-gray-200" />
