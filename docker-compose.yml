@@ -20,7 +20,7 @@ services:
     environment:
       - NODE_ENV=production
       - PORT=3107
-      - DB_HOST=192.168.0.139
+      - DB_HOST=192.168.0.96
       - DB_USER=jitdhana
       - DB_PASSWORD=Jitdana@2025
       - DB_NAME=manufacturing_system
