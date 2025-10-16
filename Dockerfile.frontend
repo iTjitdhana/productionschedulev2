@@ -45,6 +45,9 @@ RUN ls -la /app/public/ || echo "Public directory not found"
 # Debug: Show environment variables
 RUN echo "Environment variables:" && env | grep -E "(NODE_ENV|NEXT_PUBLIC_API_URL)" || echo "No env vars found"
 
+# Force set environment variable
+RUN echo "export NEXT_PUBLIC_API_URL=http://192.168.0.139:3107" >> /etc/profile
+
 # Set the correct permission for prerender cache
 RUN mkdir .next
 RUN chown nextjs:nodejs .next

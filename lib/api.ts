@@ -12,6 +12,11 @@ console.log('API Configuration:', {
   NODE_ENV: process.env.NODE_ENV
 });
 
+// Force override if needed
+if (!process.env.NEXT_PUBLIC_API_URL || process.env.NEXT_PUBLIC_API_URL.includes('localhost')) {
+  console.warn('⚠️ NEXT_PUBLIC_API_URL not set or using localhost, using fallback');
+}
+
 export interface APIResponse<T = any> {
   success: boolean;
   data?: T;
