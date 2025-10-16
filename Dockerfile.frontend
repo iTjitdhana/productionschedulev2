@@ -31,7 +31,7 @@ FROM base AS runner
 WORKDIR /app
 
 ENV NODE_ENV=production
-ENV NEXT_PUBLIC_API_URL=http://192.168.0.96:3107
+ENV NEXT_PUBLIC_API_URL=http://192.168.0.139:3107
 
 RUN addgroup --system --gid 1001 nodejs
 RUN adduser --system --uid 1001 nextjs
