@@ -1,0 +1,12 @@
+﻿{
+    "success":  true,
+    "data":  [
+
+             ],
+    "message":  "ไม่พบข้อมูลในวันที่ระบุ",
+    "meta":  {
+                 "date":  "2025-01-11",
+                 "total":  0,
+                 "timezone":  "Asia/Bangkok"
+             }
+}

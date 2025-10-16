@@ -1,0 +1,41 @@
+version: '3.8'
+
+services:
+  frontend:
+    build:
+      context: .
+      dockerfile: Dockerfile.frontend
+    ports:
+      - "3020:3015"
+    environment:
+      - NODE_ENV=production
+      - NEXT_PUBLIC_API_URL=http://localhost:3110
+    restart: unless-stopped
+    networks:
+      - production-network
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile.js
+    ports:
+      - "3110:3105"
+    environment:
+      - NODE_ENV=production
+      - PORT=3105
+      - DB_HOST=192.168.0.96
+      - DB_USER=jitdhana
+      - DB_PASSWORD=Jitdana@2025
+      - DB_NAME=manufacturing_system
+      - DB_PORT=3306
+      - DB_TIMEZONE=+07:00
+      - CORS_ORIGIN=*
+    restart: unless-stopped
+    networks:
+      - production-network
+    depends_on:
+      - frontend
+
+networks:
+  production-network:
+    driver: bridge
