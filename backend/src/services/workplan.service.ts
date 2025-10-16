@@ -56,6 +56,25 @@ export async function fetchWorkPlans(date: string): Promise<WorkPlan[]> {
       ORDER BY wpo.work_plan_id, u.name;
     `, [workPlanIds]);
 
+    // Debug: Log operator data
+    logger.debug(`Found ${operatorRows.length} operator assignments:`, 
+      operatorRows.map(row => ({
+        work_plan_id: row.work_plan_id,
+        id_code: row.id_code,
+        user_name: row.user_name,
+        position: row.position,
+        department: row.department
+      }))
+    );
+
+    // Debug: Check if users table has data
+    const [userCount] = await pool.query(`SELECT COUNT(*) as count FROM users`);
+    logger.debug(`Users table has ${userCount[0].count} records`);
+
+    // Debug: Check specific user
+    const [toonUser] = await pool.query(`SELECT * FROM users WHERE id_code = 'toon'`);
+    logger.debug(`User 'toon' data:`, toonUser);
+
     // Group operators by work_plan_id
     const operatorsByPlan = new Map<number, Assignee[]>();
     operatorRows.forEach(row => {
@@ -63,9 +82,17 @@ export async function fetchWorkPlans(date: string): Promise<WorkPlan[]> {
         operatorsByPlan.set(row.work_plan_id, []);
       }
       
+      // Use proper name mapping
+      const displayName = row.user_name || row.id_code;
+      
+      // Debug: Log name mapping
+      if (!row.user_name) {
+        logger.warn(`No user name found for id_code: ${row.id_code}, using id_code as fallback`);
+      }
+      
       operatorsByPlan.get(row.work_plan_id)!.push({
         id_code: row.id_code,
-        name: row.user_name || row.id_code, // Fallback to id_code if name is null
+        name: displayName,
         avatar: '', // Will be mapped by frontend
         position: row.position,
         department: row.department,
