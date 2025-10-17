@@ -55,6 +55,15 @@ interface ProductionTask {
   steps: ProcessStep[]    // Phase 2: ขั้นตอนการผลิต
   assignee?: Assignee // Single assignee (for backward compatibility)
   assignees?: Assignee[] // Added support for multiple assignees
+  // เพิ่มข้อมูลสำหรับการตรวจสอบ
+  taskStatus?: {
+    type: 'normal' | 'warning' | 'error'
+    color: string
+    icon: string
+    issues: string[]
+    message: string
+  }
+  hasIssues?: boolean
 }
 
 const timeSlots: TimeSlot[] = [
@@ -87,6 +96,47 @@ function calculateEndTime(startTime: string, durationMinutes: number): string {
   return `${endHours.toString().padStart(2, "0")}:${endMinutes.toString().padStart(2, "0")}`
 }
 
+// Task validation functions
+function getTaskIssues(task: any) {
+  const issues = []
+  
+  if (!task.start_time) issues.push("ไม่มีเวลาเริ่มต้น")
+  if (!task.end_time) issues.push("ไม่มีเวลาสิ้นสุด")
+  if (!task.assignees?.length) issues.push("ไม่มีผู้รับผิดชอบ")
+  if (!task.location) issues.push("ไม่ได้ระบุสถานที่")
+  if (!task.status) issues.push("ไม่มีสถานะงาน")
+  
+  return issues
+}
+
+function getTaskStatus(task: any): {
+  type: 'normal' | 'warning' | 'error'
+  color: string
+  icon: string
+  issues: string[]
+  message: string
+} {
+  const issues = getTaskIssues(task)
+  
+  if (issues.length === 0) {
+    return { 
+      type: 'normal', 
+      color: 'green', 
+      icon: '✅',
+      issues: [],
+      message: 'ข้อมูลครบถ้วน'
+    }
+  }
+  
+  return { 
+    type: 'warning', 
+    color: 'gray', 
+    icon: '⚠️',
+    issues: issues,
+    message: issues.join(", ")
+  }
+}
+
 function formatDuration(minutes: number): string {
   if (minutes >= 60) {
     const hours = Math.floor(minutes / 60)
@@ -107,6 +157,9 @@ function mapAPIDataToTask(apiData: WorkPlanResponse, index: number): ProductionT
     avatar: getAvatar(a.id_code),
   }))
 
+  // เช็คสถานะงาน
+  const taskStatus = getTaskStatus(apiData)
+  
   // Handle null start_time and end_time
   const startTime = apiData.start_time || "08:00"
   const endTime = apiData.end_time || "17:00"
@@ -120,7 +173,7 @@ function mapAPIDataToTask(apiData: WorkPlanResponse, index: number): ProductionT
     endTime: endTime,
     start_time: startTime,
     end_time: endTime,
-    color: COLOR_PALETTE[index % COLOR_PALETTE.length],
+    color: taskStatus.type === 'warning' ? '#6B7280' : COLOR_PALETTE[index % COLOR_PALETTE.length], // สีเทาสำหรับงานที่มีปัญหา
     location: apiData.location,
     image: getProductImage(apiData.job_name),
     status: apiData.status,
@@ -128,6 +181,9 @@ function mapAPIDataToTask(apiData: WorkPlanResponse, index: number): ProductionT
     assignees,
     hasSteps: apiData.hasSteps || false,  // Phase 2
     steps: apiData.steps || [],            // Phase 2
+    // เพิ่มข้อมูลสถานะ
+    taskStatus: taskStatus,
+    hasIssues: taskStatus.type === 'warning'
   }
 }
 
@@ -631,8 +687,11 @@ export default function ProductionSchedule() {
                 <div key={taskIndex} className="flex border-b border-gray-600 hover:bg-gray-50 transition-colors">
                   <div className="w-[300px] flex-shrink-0 border-r border-gray-600 p-1.5 lg:p-2 flex items-center">
                     <div className="flex-1">
-                      <div className="font-bold text-black text-xs lg:text-sm rounded flex items-center gap-2 group">
-                        <span>{taskIndex + 1}. {task.job_name}</span>
+                      <div className={`font-bold text-xs lg:text-sm rounded flex items-center gap-2 group ${task.hasIssues ? 'text-gray-500' : 'text-black'}`}>
+                        {task.hasIssues && <span className="text-orange-500">⚠️</span>}
+                        <span title={task.hasIssues ? task.taskStatus?.message : undefined}>
+                          {taskIndex + 1}. {task.job_name}
+                        </span>
                         {SHOW_TASK_DETAIL_BUTTON && (
                           <ChevronRight
                             className="w-4 h-4 text-gray-400 hover:text-black hover:translate-x-0.5 transition-all cursor-pointer hover:scale-110"
@@ -722,8 +781,8 @@ export default function ProductionSchedule() {
                     </div>
 
                     <div className="absolute inset-0 grid pointer-events-none" style={{ gridTemplateColumns }}>
-                      {/* Phase 2: Smart Display - แสดงตาม hasSteps */}
-                      {task.hasSteps && task.steps.length > 0
+                      {/* แสดงแท่งเวลาเฉพาะงานปกติ */}
+                      {!task.hasIssues && task.hasSteps && task.steps.length > 0
                         ? (() => {
                             // มี steps: แสดงแท่งแบ่งเป็นส่วนๆ ตาม percentage
                             const { start: taskStart, end: taskEnd } = getGridColumnSpan(task.start_time, task.end_time)
@@ -829,8 +888,8 @@ export default function ProductionSchedule() {
                               </>
                             )
                           })()
-                        : (() => {
-                            // ไม่มี steps: แสดงแท่งปกติ (Phase 1)
+                        : !task.hasIssues ? (() => {
+                            // ไม่มี steps และไม่มีปัญหา: แสดงแท่งปกติ (Phase 1)
                             const { start, end } = getGridColumnSpan(task.start_time, task.end_time)
                             const durationMinutes = timeToMinutes(task.end_time) - timeToMinutes(task.start_time)
                             
@@ -914,7 +973,7 @@ export default function ProductionSchedule() {
                                 </div>
                               </>
                             )
-                          })()}
+                          })() : null}
                     </div>
                   </div>
                 </div>
@@ -930,7 +989,10 @@ export default function ProductionSchedule() {
             {productionTasks.map((task, index) => (
               <div key={index} className="flex items-center gap-2">
                 <div className={`w-5 lg:w-6 h-3 lg:h-4 rounded ${task.color} border border-gray-600`} />
-                <span>{task.job_name}</span>
+                <span className={task.hasIssues ? 'text-gray-500' : ''}>
+                  {task.hasIssues && <span className="text-orange-500 mr-1">⚠️</span>}
+                  {task.job_name}
+                </span>
               </div>
             ))}
           </div>
