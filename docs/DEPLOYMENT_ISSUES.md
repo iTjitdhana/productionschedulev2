@@ -307,7 +307,7 @@ async function checkConnections() {
     const connection = await mysql.createConnection({
       host: process.env.DB_HOST || '192.168.0.96',
       user: process.env.DB_USER || 'jitdhana',
-      password: process.env.DB_PASSWORD || 'Jitdana@2025',
+      password: process.env.DB_PASSWORD || 'iT12345$',
       database: process.env.DB_NAME || 'manufacturing_system',
     });
     console.log('✅ Database connection: OK');
@@ -692,9 +692,330 @@ const taskColor = isRepackJob ? 'bg-gray-400' : task.color
 
 ---
 
+## 🆕 Phase 3: Docker Database Connection Issues (October 2025)
+
+### 🔴 Issue: Docker Container ไม่สามารถเชื่อมต่อ Database ได้
+
+#### Symptom (อาการ):
+```
+backend-1  | ❌ Database connection failed: Access denied for user 'jitdhana'@'172.26.0.3' (using password: YES)
+```
+
+#### สาเหตุที่พบ:
+
+**1. Docker Internal Network IP เปลี่ยนแปลง:**
+```
+- Container ได้ IP: 172.26.0.3 (Docker internal network)
+- MySQL user 'jitdhana' ไม่มีสิทธิ์สำหรับ IP นี้
+- ก่อนหน้านี้ container อาจได้ IP ที่มีสิทธิ์อยู่แล้ว (172.25.x.x หรือ 192.168.0.x)
+```
+
+**2. MySQL User Permissions:**
+```sql
+-- User 'jitdhana' มีสิทธิ์สำหรับ:
+SELECT User, Host FROM mysql.user WHERE User = 'jitdhana';
++----------+---------------+
+| User     | Host          |
++----------+---------------+
+| jitdhana | %             |  ← any host
+| jitdhana | 172.25.%      |  ← 172.25.x.x subnet
+| jitdhana | 192.168.0.%   |  ← 192.168.0.x subnet
+| jitdhana | 192.168.0.139 |  ← specific IP
+| jitdhana | localhost     |  ← localhost
++----------+---------------+
+
+-- แต่ไม่มีสิทธิ์สำหรับ 172.26.0.3
+```
+
+#### วิธีแก้ไข:
+
+**Option 1: ใช้ Host Networking (แนะนำ)**
+```yaml
+# docker-compose.yml
+services:
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile.js
+    network_mode: "host"  # ใช้ network ของ host
+    environment:
+      - NODE_ENV=production
+      - PORT=3107
+      - DB_HOST=192.168.0.96
+      - DB_USER=jitdhana
+      - DB_PASSWORD=iT12345$
+      - DB_NAME=manufacturing_system
+      - DB_PORT=3306
+      - DB_TIMEZONE=+07:00
+      - CORS_ORIGIN=*
+    restart: unless-stopped
+    # ไม่ต้องมี ports mapping เมื่อใช้ host networking
+```
+
+**ข้อดีของ Host Networking:**
+- ✅ Container ใช้ IP ของ host ในการเชื่อมต่อ database
+- ✅ ไม่ต้องแก้ไข MySQL user permissions
+- ✅ ไม่มีปัญหา Docker internal network IP เปลี่ยนแปลง
+- ✅ การเชื่อมต่อ database เสถียรกว่า
+
+**ข้อเสีย:**
+- ⚠️ Container จะใช้ port ของ host โดยตรง (อาจ conflict กับ services อื่น)
+- ⚠️ ไม่สามารถใช้ Docker network features ได้
+
+**Option 2: เพิ่มสิทธิ์สำหรับ Docker Network (ทางเลือก)**
+```sql
+-- เพิ่มสิทธิ์สำหรับ Docker networks
+GRANT ALL PRIVILEGES ON manufacturing_system.* TO 'jitdhana'@'172.%.%.%';
+FLUSH PRIVILEGES;
+
+-- หรือเฉพาะ subnet ที่ใช้
+GRANT ALL PRIVILEGES ON manufacturing_system.* TO 'jitdhana'@'172.26.%.%';
+FLUSH PRIVILEGES;
+```
+
+#### ผลลัพธ์:
+- ✅ Container ใช้ IP ของ host (192.168.0.96) ในการเชื่อมต่อ database
+- ✅ ไม่มีปัญหา permission อีกต่อไป
+- ✅ แสดงข้อมูลงานจริง 11 งานแทนที่จะเป็น 1 งานทดสอบ
+
+---
+
+## 🆕 Phase 3: TypeScript Compilation Issues (October 2025)
+
+### 🔴 Issue: Docker Build ล้มเหลวเนื่องจาก TypeScript Errors
+
+#### Symptom (อาการ):
+```
+=> ERROR [backend  7/10] RUN npm run build
+src/services/workplan.service.ts(36,22): error TS2339: Property 'length' does not exist on type 'QueryResult'.
+Property 'length' does not exist on type 'OkPacket'.
+```
+
+#### สาเหตุที่พบ:
+
+**1. TypeScript Type Assertions ไม่ถูกต้อง:**
+```typescript
+// ❌ Wrong - ไม่มี type assertion
+const [workPlanRows] = await pool.query(`...`);
+if (workPlanRows.length === 0) {  // Error: QueryResult ไม่มี .length
+  return [];
+}
+```
+
+**2. MySQL2 QueryResult Type Mismatch:**
+- `pool.query()` return `QueryResult` type
+- `QueryResult` อาจเป็น `RowDataPacket[]` หรือ `OkPacket`
+- ต้อง cast เป็น array type ที่ถูกต้อง
+
+#### วิธีแก้ไข:
+
+**1. เพิ่ม Type Assertions:**
+```typescript
+// ✅ Correct - เพิ่ม type assertion
+const [workPlanRows] = await pool.query(`...`);
+const workPlanRowsArray = workPlanRows as WorkPlanRow[];
+if (workPlanRowsArray.length === 0) {
+  return [];
+}
+
+// ใช้ array ที่ถูกต้อง
+const workPlanIds = workPlanRowsArray.map(row => row.id);
+```
+
+**2. แก้ไขทุกจุดที่ใช้ pool.query():**
+```typescript
+// Operators
+const [operatorRows] = await pool.query(`...`);
+const operatorRowsArray = operatorRows as OperatorRow[];
+if (operatorRowsArray.length === 0) {
+  return [];
+}
+
+// Process Templates
+const [templates] = await pool.query(`...`);
+const templatesArray = templates as ProcessTemplateRow[];
+if (templatesArray.length > 0) {
+  return templatesArray;
+}
+```
+
+**3. อัปเดต Dockerfile สำหรับ Production Build:**
+```dockerfile
+# Dockerfile.js - เปลี่ยนจาก JavaScript เป็น TypeScript
+FROM node:18-alpine
+
+WORKDIR /app
+
+# Install ALL dependencies (including dev dependencies for TypeScript)
+RUN corepack enable pnpm
+COPY package*.json pnpm-lock.yaml* ./
+RUN \
+  if [ -f pnpm-lock.yaml ]; then pnpm i --no-frozen-lockfile; \
+  elif [ -f package-lock.json ]; then npm ci; \
+  else npm install; \
+  fi
+
+COPY . .
+
+# Build TypeScript
+RUN npm run build
+
+# Use compiled JavaScript
+CMD ["npm", "start"]
+```
+
+#### การป้องกัน:
+
+**1. TypeScript Configuration:**
+```json
+// tsconfig.json
+{
+  "compilerOptions": {
+    "strict": true,
+    "noImplicitAny": true,
+    "strictNullChecks": true
+  }
+}
+```
+
+**2. Type Definitions:**
+```typescript
+// types/index.ts
+export interface WorkPlanRow {
+  id: number;
+  job_code: string;
+  job_name: string;
+  // ... other fields
+}
+
+export interface OperatorRow {
+  work_plan_id: number;
+  id_code: string;
+  user_name: string;
+  // ... other fields
+}
+```
+
+**3. Database Service Pattern:**
+```typescript
+// ใช้ helper function สำหรับ type assertion
+async function queryWithType<T>(sql: string, params: any[] = []): Promise<T[]> {
+  const [rows] = await pool.query(sql, params);
+  return rows as T[];
+}
+
+// ใช้งาน
+const workPlans = await queryWithType<WorkPlanRow>(`
+  SELECT * FROM work_plans WHERE production_date = ?
+`, [date]);
+```
+
+---
+
+## 🆕 Phase 3: Mock Data vs Real Data Issues (October 2025)
+
+### 🔴 Issue: API ส่งกลับ Mock Data แทนข้อมูลจริงจาก Database
+
+#### Symptom (อาการ):
+```
+curl "http://192.168.0.96:3107/api/workplans?date=2025-10-17"
+{"success":true,"data":[{"id":1,"job_code":"TEST001","job_name":"ทดสอบงาน 1",...}]}
+```
+
+#### สาเหตุที่พบ:
+
+**1. Mock JavaScript File ยังคงอยู่:**
+```
+backend/src/index.js  ← Mock server file
+backend/src/index.ts  ← Real TypeScript server
+```
+
+**2. Docker Build Process:**
+- Dockerfile.js กำหนดให้รัน `node src/index.js`
+- แต่ `src/index.js` เป็น mock data file
+- TypeScript compilation ไม่ได้ถูกใช้
+
+**3. Container Restart Issues:**
+- แม้จะลบ `src/index.js` แล้ว
+- Docker build อาจ recreate หรือ cache ไฟล์เก่า
+
+#### วิธีแก้ไข:
+
+**1. ลบ Mock File:**
+```bash
+# ลบ mock file
+rm backend/src/index.js
+
+# ตรวจสอบว่าไม่มี mock files
+ls -la backend/src/
+```
+
+**2. อัปเดต Dockerfile:**
+```dockerfile
+# เปลี่ยนจาก JavaScript execution เป็น TypeScript compilation
+CMD ["npm", "run", "dev"]  # หรือ
+CMD ["npm", "start"]       # หลัง build
+```
+
+**3. ตรวจสอบ Container Contents:**
+```bash
+# เข้าไปใน container
+docker compose exec backend sh
+
+# ตรวจสอบไฟล์ที่มีอยู่
+ls -la src/
+cat src/index.js  # ควรไม่มีไฟล์นี้
+
+# ตรวจสอบ process ที่รัน
+ps aux | grep node
+```
+
+**4. Force Rebuild:**
+```bash
+# ลบ containers และ images
+docker compose down
+docker system prune -f
+
+# Rebuild ทั้งหมด
+docker compose up -d --build --no-cache
+```
+
+#### การป้องกัน:
+
+**1. .gitignore Configuration:**
+```gitignore
+# Backend
+backend/src/index.js
+backend/dist/
+backend/*.js
+!backend/src/**/*.ts
+```
+
+**2. Build Scripts:**
+```json
+{
+  "scripts": {
+    "dev": "ts-node-dev --respawn --transpile-only src/index.ts",
+    "build": "tsc",
+    "start": "node dist/index.js",
+    "clean": "rm -rf dist/ src/*.js"
+  }
+}
+```
+
+**3. Docker Build Validation:**
+```dockerfile
+# เพิ่ม validation step
+RUN npm run build
+RUN ls -la dist/  # ตรวจสอบ compiled files
+RUN rm -f src/*.js  # ลบ JavaScript files ใน src/
+```
+
+---
+
 **เอกสารนี้สร้างเมื่อ**: 10 ตุลาคม 2025  
-**อัปเดตล่าสุด**: 16 ตุลาคม 2025  
-**สถานะ**: Active - Phase 2.5 Complete, Phase 3 Planning
+**อัปเดตล่าสุด**: 17 ตุลาคม 2025  
+**สถานะ**: Active - Phase 3 Complete, Docker & TypeScript Issues Resolved
 
 
 
