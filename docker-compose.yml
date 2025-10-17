@@ -15,8 +15,7 @@ services:
     build:
       context: ./backend
       dockerfile: Dockerfile.js
-    ports:
-      - "3107:3107"
+    network_mode: "host"
     environment:
       - NODE_ENV=production
       - PORT=3107
@@ -28,8 +27,6 @@ services:
       - DB_TIMEZONE=+07:00
       - CORS_ORIGIN=*
     restart: unless-stopped
-    networks:
-      - production-network
     depends_on:
       - frontend
 
