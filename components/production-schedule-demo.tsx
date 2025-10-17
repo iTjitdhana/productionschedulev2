@@ -213,7 +213,7 @@ const formatDuration = formatDurationHelper || ((minutes: number): string => {
   return `${minutes} นาที`
 })
 
-export default function ProductionScheduleDemo() {
+export function ProductionScheduleDemo() {
   // API State
   const [productionTasks, setProductionTasks] = useState<ProductionTask[]>([])
   const [loading, setLoading] = useState(false)
@@ -438,3 +438,5 @@ export default function ProductionScheduleDemo() {
     </div>
   )
 }
+
+export default ProductionScheduleDemo
