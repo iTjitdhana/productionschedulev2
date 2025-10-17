@@ -14,9 +14,9 @@ console.log('   DB_NAME:', process.env.DB_NAME ? '✓' : '✗ NOT LOADED');
 
 // Database configuration
 const dbConfig = {
-  host: process.env.DB_HOST || '192.168.0.139',
+  host: process.env.DB_HOST || '192.168.0.96',
   user: process.env.DB_USER || 'jitdhana',
-  password: process.env.DB_PASSWORD || 'Jitdana@2025', // Add fallback
+  password: process.env.DB_PASSWORD || 'iT12345$', // Add fallback
   database: process.env.DB_NAME || 'manufacturing_system',
   port: Number(process.env.DB_PORT) || 3306,
   timezone: process.env.DB_TIMEZONE || '+07:00',
