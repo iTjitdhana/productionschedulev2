@@ -14,7 +14,7 @@ services:
       dockerfile: Dockerfile.frontend
     container_name: production-schedule-frontend
     ports:
-      - "3017:3017"  # เปิด direct access
+      - "3019:3017"  # External:Internal - เปลี่ยนเป็น 3019
     env_file:
       - ../.env.production
     environment:
@@ -36,7 +36,7 @@ services:
       dockerfile: Dockerfile.js
     container_name: production-schedule-backend
     ports:
-      - "3107:3107"  # เปิด direct access
+      - "3109:3107"  # External:Internal - เปลี่ยนเป็น 3109
     env_file:
       - ../backend/.env.production
     environment:
@@ -96,6 +96,6 @@ networks:
 # ========================================
 # Access URLs (LAN):
 # ========================================
-# Frontend: http://SERVER_IP:3017
-# Backend API: http://SERVER_IP:3107/api/
-# Health Check: http://SERVER_IP:3107/api/health
+# Frontend: http://SERVER_IP:3019
+# Backend API: http://SERVER_IP:3109/api/
+# Health Check: http://SERVER_IP:3109/api/health
