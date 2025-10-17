@@ -1,7 +1,7 @@
 import type React from "react"
 import type { Metadata } from "next"
 import { Noto_Sans_Thai } from "next/font/google"
-// import { Analytics } from "@vercel/analytics/next"
+import { Analytics } from "@vercel/analytics/next"
 import "./globals.css"
 import { Suspense } from "react"
 
@@ -29,7 +29,7 @@ export default function RootLayout({
     <html lang="th">
       <body className={`font-sans ${notoSansThai.variable}`}>
         <Suspense fallback={null}>{children}</Suspense>
-        {/* <Analytics /> */}
+        <Analytics />
       </body>
     </html>
   )
