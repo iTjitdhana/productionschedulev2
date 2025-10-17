@@ -79,6 +79,7 @@ const timeSlots: TimeSlot[] = [
 ]
 
 function calculateEndTime(startTime: string, durationMinutes: number): string {
+  if (!startTime) return "17:00" // Default end time if no start time
   const [hours, minutes] = startTime.split(":").map(Number)
   const totalMinutes = hours * 60 + minutes + durationMinutes
   const endHours = Math.floor(totalMinutes / 60)
@@ -106,15 +107,19 @@ function mapAPIDataToTask(apiData: WorkPlanResponse, index: number): ProductionT
     avatar: getAvatar(a.id_code),
   }))
 
+  // Handle null start_time and end_time
+  const startTime = apiData.start_time || "08:00"
+  const endTime = apiData.end_time || "17:00"
+
   return {
     id: apiData.id,
     job_code: apiData.job_code,
     job_name: apiData.job_name,
     name: apiData.job_name, // Alias
-    startTime: apiData.start_time,
-    endTime: apiData.end_time,
-    start_time: apiData.start_time,
-    end_time: apiData.end_time,
+    startTime: startTime,
+    endTime: endTime,
+    start_time: startTime,
+    end_time: endTime,
     color: COLOR_PALETTE[index % COLOR_PALETTE.length],
     location: apiData.location,
     image: getProductImage(apiData.job_name),
@@ -146,6 +151,7 @@ const SHOW_TASK_DETAIL_BUTTON = false
 
 // Use helpers from constants (with fallback to local)
 const timeToMinutes = timeToMinutesHelper || ((time: string): number => {
+  if (!time) return 480 // Default to 8:00 AM if no time
   const [hours, minutes] = time.split(":").map(Number)
   return hours * 60 + minutes
 })
@@ -157,8 +163,12 @@ const timeToGridColumn = timeToGridColumnHelper || ((time: string): number => {
 })
 
 const getGridColumnSpan = getGridColumnSpanHelper || ((startTime: string, endTime: string): { start: number; end: number } => {
-  const startColumn = timeToGridColumn(startTime)
-  const endMinutes = timeToMinutes(endTime)
+  // Handle null times
+  const safeStartTime = startTime || "08:00"
+  const safeEndTime = endTime || "17:00"
+  
+  const startColumn = timeToGridColumn(safeStartTime)
+  const endMinutes = timeToMinutes(safeEndTime)
   const endMinutesFromStart = endMinutes - START_TIME
   const endColumn = Math.ceil(endMinutesFromStart / MINUTES_PER_GRID_UNIT) + 1
   return { start: startColumn, end: endColumn }
