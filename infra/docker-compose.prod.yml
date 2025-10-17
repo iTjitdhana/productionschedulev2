@@ -2,35 +2,19 @@
 # Docker Compose - Production Environment
 # ========================================
 # Reference: DEV_STANDARD.md Section 17 (Deployment Summary)
+# Modified: Direct access without nginx (LAN deployment)
 
 version: '3.8'
 
 services:
-  # Nginx Reverse Proxy
-  nginx:
-    image: nginx:alpine
-    container_name: production-schedule-nginx
-    ports:
-      - "80:80"
-      - "443:443"
-    volumes:
-      - ./nginx.conf:/etc/nginx/nginx.conf:ro
-      - ./ssl:/etc/nginx/ssl:ro # Optional: SSL certificates
-    restart: always
-    networks:
-      - prod-network
-    depends_on:
-      - frontend
-      - backend
-
   # Frontend Service
   frontend:
     build:
       context: ..
       dockerfile: Dockerfile.frontend
     container_name: production-schedule-frontend
-    expose:
-      - "3017"
+    ports:
+      - "3017:3017"  # เปิด direct access
     env_file:
       - ../.env.production
     environment:
@@ -51,8 +35,8 @@ services:
       context: ../backend
       dockerfile: Dockerfile.js
     container_name: production-schedule-backend
-    expose:
-      - "3107"
+    ports:
+      - "3107:3107"  # เปิด direct access
     env_file:
       - ../backend/.env.production
     environment:
@@ -70,6 +54,26 @@ services:
 networks:
   prod-network:
     driver: bridge
+
+# ========================================
+# Nginx Reverse Proxy (Disabled for LAN deployment)
+# ========================================
+# Uncomment if you need reverse proxy in the future:
+#
+# services:
+#   nginx:
+#     image: nginx:alpine
+#     container_name: production-schedule-nginx
+#     ports:
+#       - "8080:80"
+#     volumes:
+#       - ./nginx.conf:/etc/nginx/nginx.conf:ro
+#     restart: always
+#     networks:
+#       - prod-network
+#     depends_on:
+#       - frontend
+#       - backend
 
 # ========================================
 # Deployment Commands (Production):
@@ -90,13 +94,8 @@ networks:
 #   docker compose -f infra/docker-compose.prod.yml ps
 #
 # ========================================
-# Rollback to Previous Version:
+# Access URLs (LAN):
 # ========================================
-# 1. git checkout v1.3.1
-# 2. docker compose -f infra/docker-compose.prod.yml up -d --build
-#
-# ========================================
-# Database Migration (if using Prisma):
-# ========================================
-# docker compose -f infra/docker-compose.prod.yml exec backend npx prisma migrate deploy
-
+# Frontend: http://SERVER_IP:3017
+# Backend API: http://SERVER_IP:3107/api/
+# Health Check: http://SERVER_IP:3107/api/health
