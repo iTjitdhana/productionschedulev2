@@ -1,0 +1,102 @@
+# ========================================
+# Docker Compose - Production Environment
+# ========================================
+# Reference: DEV_STANDARD.md Section 17 (Deployment Summary)
+
+version: '3.8'
+
+services:
+  # Nginx Reverse Proxy
+  nginx:
+    image: nginx:alpine
+    container_name: production-schedule-nginx
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./ssl:/etc/nginx/ssl:ro # Optional: SSL certificates
+    restart: always
+    networks:
+      - prod-network
+    depends_on:
+      - frontend
+      - backend
+
+  # Frontend Service
+  frontend:
+    build:
+      context: ..
+      dockerfile: Dockerfile.frontend
+    container_name: production-schedule-frontend
+    expose:
+      - "3017"
+    env_file:
+      - ../.env.production
+    environment:
+      - NODE_ENV=production
+    restart: always
+    networks:
+      - prod-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3017"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  # Backend API Service
+  backend:
+    build:
+      context: ../backend
+      dockerfile: Dockerfile.js
+    container_name: production-schedule-backend
+    expose:
+      - "3107"
+    env_file:
+      - ../backend/.env.production
+    environment:
+      - NODE_ENV=production
+    restart: always
+    networks:
+      - prod-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3107/api/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+networks:
+  prod-network:
+    driver: bridge
+
+# ========================================
+# Deployment Commands (Production):
+# ========================================
+# Build & Start:
+#   docker compose -f infra/docker-compose.prod.yml up -d --build
+#
+# View Logs:
+#   docker compose -f infra/docker-compose.prod.yml logs -f
+#
+# Stop:
+#   docker compose -f infra/docker-compose.prod.yml down
+#
+# Restart Specific Service:
+#   docker compose -f infra/docker-compose.prod.yml restart backend
+#
+# Health Check:
+#   docker compose -f infra/docker-compose.prod.yml ps
+#
+# ========================================
+# Rollback to Previous Version:
+# ========================================
+# 1. git checkout v1.3.1
+# 2. docker compose -f infra/docker-compose.prod.yml up -d --build
+#
+# ========================================
+# Database Migration (if using Prisma):
+# ========================================
+# docker compose -f infra/docker-compose.prod.yml exec backend npx prisma migrate deploy
+

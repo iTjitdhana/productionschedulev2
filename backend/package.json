@@ -17,11 +17,15 @@
   "author": "",
   "license": "PROPRIETARY",
   "dependencies": {
+    "@types/uuid": "^10.0.0",
     "cors": "^2.8.5",
     "dotenv": "^16.3.1",
     "express": "^4.18.2",
+    "express-rate-limit": "^8.1.0",
     "express-validator": "^7.0.1",
-    "mysql2": "^3.6.0"
+    "helmet": "^8.1.0",
+    "mysql2": "^3.6.0",
+    "uuid": "^13.0.0"
   },
   "devDependencies": {
     "@types/cors": "^2.8.17",
@@ -31,8 +35,3 @@
     "typescript": "^5.2.2"
   }
 }
-
-
-
-
-

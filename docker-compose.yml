@@ -1,3 +1,6 @@
+# ⚠️ This file is deprecated - Use infra/docker-compose.dev.yml or infra/docker-compose.prod.yml instead
+# ⚠️ According to DEV_STANDARD.md, all configs must use env_file instead of hardcoded values
+
 services:
   frontend:
     build:
@@ -5,8 +8,8 @@ services:
       dockerfile: Dockerfile.frontend
     ports:
       - "3017:3017"
-    environment:
-      - NODE_ENV=production
+    env_file:
+      - .env.production
     restart: unless-stopped
     networks:
       - production-network
@@ -16,16 +19,8 @@ services:
       context: ./backend
       dockerfile: Dockerfile.js
     network_mode: "host"
-    environment:
-      - NODE_ENV=production
-      - PORT=3107
-      - DB_HOST=192.168.0.96
-      - DB_USER=jitdhana
-      - DB_PASSWORD=iT12345$
-      - DB_NAME=manufacturing_system
-      - DB_PORT=3306
-      - DB_TIMEZONE=+07:00
-      - CORS_ORIGIN=*
+    env_file:
+      - ./backend/.env.production
     restart: unless-stopped
     depends_on:
       - frontend

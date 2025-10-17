@@ -1,0 +1,62 @@
+# ========================================
+# Docker Compose - Development Environment
+# ========================================
+# Reference: DEV_STANDARD.md Section 11 (Project Structure Standard)
+
+version: '3.8'
+
+services:
+  # Frontend Service
+  frontend:
+    build:
+      context: ..
+      dockerfile: Dockerfile.frontend
+    container_name: production-schedule-frontend-dev
+    ports:
+      - "${PORT:-3017}:3017"
+    env_file:
+      - ../.env.development
+    environment:
+      - NODE_ENV=development
+    volumes:
+      - ../:/app
+      - /app/node_modules
+    command: npm run dev
+    restart: unless-stopped
+    networks:
+      - dev-network
+    depends_on:
+      - backend
+
+  # Backend Service
+  backend:
+    build:
+      context: ../backend
+      dockerfile: Dockerfile.js
+    container_name: production-schedule-backend-dev
+    ports:
+      - "3107:3107"
+    env_file:
+      - ../backend/.env.development
+    environment:
+      - NODE_ENV=development
+    volumes:
+      - ../backend:/app
+      - /app/node_modules
+    command: npm run dev
+    restart: unless-stopped
+    networks:
+      - dev-network
+
+networks:
+  dev-network:
+    driver: bridge
+
+# ========================================
+# Usage:
+# ========================================
+# Start: docker compose -f infra/docker-compose.dev.yml up -d
+# Stop: docker compose -f infra/docker-compose.dev.yml down
+# Logs: docker compose -f infra/docker-compose.dev.yml logs -f
+# Rebuild: docker compose -f infra/docker-compose.dev.yml up -d --build
+

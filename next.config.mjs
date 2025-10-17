@@ -10,14 +10,8 @@ const nextConfig = {
     unoptimized: true,
   },
   output: 'standalone',
-  // Ensure static files are served correctly
   trailingSlash: false,
-  // Disable image optimization for Docker
-  experimental: {
-    // outputFileTracingRoot: undefined, // Removed - not needed
-  },
-  // Allow cross-origin requests from LAN IPs
-  allowedDevOrigins: ['192.168.0.96'],
+  // Environment variables are handled via .env.* files (DEV_STANDARD compliant)
 }
 
 export default nextConfig

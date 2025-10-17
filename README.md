@@ -51,9 +51,9 @@
 - CORS
 
 **Database:**
-- MySQL 8.0
-- Database: manufacturing_system
-- Host: 192.168.0.96
+- MySQL 8.0+
+- Configuration: See `.env.development` / `.env.production`
+- Connection: Via environment variables (no hardcoded credentials)
 
 ---
 
@@ -99,21 +99,34 @@ npm install
 
 #### 3. Configuration
 
-**Frontend (.env.local):**
-```env
-NEXT_PUBLIC_API_URL=http://localhost:3107
+⚠️ **Environment Setup** (DEV_STANDARD Compliant)
+
+**Step 1:** Create environment files from templates:
+
+```bash
+# Frontend
+cp .env.example .env.development
+cp .env.example .env.production
+
+# Backend
+cp backend/.env.example backend/.env.development
+cp backend/.env.example backend/.env.production
 ```
 
-**Backend (.env):**
+**Step 2:** Update credentials in `.env.development` and `.env.production`
+
+**⚠️ Never commit `.env*` files with real credentials to Git!**
+
+Example values (see `.env.example` for full template):
 ```env
-PORT=3107
-DB_HOST=192.168.0.96
-DB_USER=jitdhana
-DB_PASSWORD=Jitdana@2025
+# Frontend
+NEXT_PUBLIC_API_BASE_URL=http://localhost:3107
+
+# Backend
+DB_HOST=your_db_host
+DB_USER=your_db_user
+DB_PASSWORD=***
 DB_NAME=manufacturing_system
-DB_PORT=3306
-DB_TIMEZONE=+07:00
-CORS_ORIGIN=*
 ```
 
 #### 4. Run Development
@@ -302,18 +315,24 @@ npm start
 
 ### Environment Variables (Production)
 
-**Frontend:**
+Use `.env.production` files (created from `.env.example`):
+
+**Frontend:** `.env.production`
 ```env
-NEXT_PUBLIC_API_URL=http://192.168.0.50:3107
+NEXT_PUBLIC_API_BASE_URL=http://your-server-ip:3107
+NODE_ENV=production
 ```
 
-**Backend:**
+**Backend:** `backend/.env.production`
 ```env
-PORT=3107
 NODE_ENV=production
-CORS_ORIGIN=http://192.168.0.50:3017
-# ... database config
+DB_HOST=your_db_host
+DB_USER=***
+DB_PASSWORD=***
+CORS_ORIGIN=http://your-server-ip:3017
 ```
+
+**⚠️ Security:** Update credentials and use strong passwords in production!
 
 ### Using PM2 (Recommended)
 
@@ -358,6 +377,94 @@ curl http://localhost:3107/api/workplans?date=2025-10-08
 
 ---
 
+## 📦 Git Workflow & Version Control
+
+This project follows **DEV_STANDARD.md** for version control and deployment.
+
+### Branch Strategy
+- `main` → Production-ready releases (tagged)
+- `develop` → Integration branch for features
+- `feature/<name>` → New features
+- `fix/<name>` → Bug fixes
+
+### Commit Message Convention
+Follow **Conventional Commits**:
+
+```bash
+feat: เพิ่มระบบ export CSV
+fix: แก้ปัญหา timezone ที่วันที่หลุด
+chore: อัปเดต dependencies
+docs: เพิ่มคำอธิบาย deployment
+```
+
+### Tagging & Releases
+
+**Version Format:** `vMAJOR.MINOR.PATCH`
+
+- **Major (v2.0.0):** Breaking changes
+- **Minor (v1.1.0):** New features
+- **Patch (v1.0.1):** Bug fixes
+
+**Example:**
+```bash
+# After completing feature
+git add .
+git commit -m "feat: เพิ่มระบบจัดการผู้ใช้"
+git tag v1.4.0
+git push && git push --tags
+```
+
+### Deployment (Linux Server)
+
+**Deploy new version:**
+```bash
+# On server
+git fetch --all
+git checkout v1.4.0
+docker compose -f infra/docker-compose.prod.yml up -d --build
+```
+
+**Using Docker Compose:**
+```bash
+# Development
+docker compose -f infra/docker-compose.dev.yml up -d
+
+# Production
+docker compose -f infra/docker-compose.prod.yml up -d --build
+```
+
+### Rollback Procedure
+
+**If something goes wrong, rollback to previous version:**
+
+```bash
+# Step 1: Check available versions
+git tag
+
+# Step 2: Checkout previous stable version
+git checkout v1.3.1
+
+# Step 3: Rebuild and restart
+docker compose -f infra/docker-compose.prod.yml up -d --build
+
+# Step 4: Verify
+curl http://localhost:3107/api/health
+```
+
+**Quick Rollback Commands:**
+```bash
+# Stop current version
+docker compose -f infra/docker-compose.prod.yml down
+
+# Checkout previous tag
+git checkout v1.3.1
+
+# Restart
+docker compose -f infra/docker-compose.prod.yml up -d --build
+```
+
+---
+
 ## 🗺️ Roadmap
 
 ### Phase 1 (Current) - MVP
@@ -365,6 +472,9 @@ curl http://localhost:3107/api/workplans?date=2025-10-08
 - [x] Database integration
 - [x] Display work plans
 - [x] Export to Excel
+- [x] Environment-based configuration (DEV_STANDARD)
+- [x] Security middleware (Helmet, Rate Limit)
+- [x] Health check endpoint with trace ID
 - [ ] Bug fixes & optimization
 
 ### Phase 2 (Future)

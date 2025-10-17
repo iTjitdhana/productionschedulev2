@@ -1,21 +1,28 @@
 /**
  * API Client for Production Schedule System
+ * ⚠️ All configurations must come from environment variables
  */
 
-// Force use correct API URL for production
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://192.168.0.96:3107';
-const API_PREFIX = '/api';
+// API Configuration from ENV (DEV_STANDARD compliant)
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
+const API_PREFIX = process.env.NEXT_PUBLIC_API_PREFIX || '/api';
 
-// Debug: Log API configuration
-console.log('API Configuration:', {
-  NEXT_PUBLIC_API_URL: process.env.NEXT_PUBLIC_API_URL,
-  API_BASE_URL: API_BASE_URL,
-  NODE_ENV: process.env.NODE_ENV
-});
+// Validate required environment variables
+if (!API_BASE_URL) {
+  throw new Error(
+    '❌ NEXT_PUBLIC_API_BASE_URL is not defined! ' +
+    'Please create .env.development or .env.production from .env.example'
+  );
+}
 
-// Force override if needed
-if (!process.env.NEXT_PUBLIC_API_URL || process.env.NEXT_PUBLIC_API_URL.includes('localhost')) {
-  console.warn('⚠️ NEXT_PUBLIC_API_URL not set or using localhost, using fallback');
+// Debug: Log API configuration (only in development)
+if (process.env.NODE_ENV === 'development') {
+  console.log('API Configuration:', {
+    API_BASE_URL,
+    API_PREFIX,
+    NODE_ENV: process.env.NODE_ENV,
+    APP_ENV: process.env.NEXT_PUBLIC_APP_ENV
+  });
 }
 
 export interface APIResponse<T = any> {

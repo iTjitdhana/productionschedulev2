@@ -2,6 +2,8 @@ import express, { Application } from 'express';
 import dotenv from 'dotenv';
 import { configureCors } from './middlewares/cors.middleware';
 import { errorHandler, notFoundHandler } from './middlewares/error.middleware';
+import { configureHelmet, configureRateLimit } from './middlewares/security.middleware';
+import { traceIdMiddleware } from './middlewares/trace.middleware';
 import workplanRoutes from './routes/workplans';
 import logger from './utils/logger';
 import './config/database'; // Initialize database connection
@@ -14,18 +16,31 @@ const app: Application = express();
 const PORT = Number(process.env.PORT) || 3107;
 const API_PREFIX = process.env.API_PREFIX || '/api';
 
-// Middlewares
+// Security Middlewares (DEV_STANDARD compliant)
+app.use(configureHelmet()); // Security headers
+app.use(traceIdMiddleware); // Trace ID for logging
+
+// Body Parsing Middlewares
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+
+// CORS Middleware
 app.use(configureCors());
 
-// Request logging middleware
+// Rate Limiting (Apply globally or per-route)
+if (process.env.NODE_ENV === 'production') {
+  app.use(configureRateLimit());
+  logger.info('✅ Rate limiting enabled (production mode)');
+}
+
+// Request logging middleware (with trace ID)
 app.use((req, res, next) => {
   const start = Date.now();
   res.on('finish', () => {
     const duration = Date.now() - start;
+    const traceId = req.traceId || 'unknown';
     logger.info(
-      `${req.method} ${req.originalUrl} ${res.statusCode} - ${duration}ms`
+      `[${traceId}] ${req.method} ${req.originalUrl} ${res.statusCode} - ${duration}ms`
     );
   });
   next();

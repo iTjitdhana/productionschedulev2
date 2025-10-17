@@ -12,11 +12,19 @@ dist/
 build/
 
 # Environment variables
+# ⚠️ NEVER commit .env files with real credentials
 .env
+.env.*
+!.env.example
 .env.local
+.env.development
 .env.development.local
-.env.test.local
+.env.production
 .env.production.local
+.env.test
+.env.test.local
+.env.staging
+.env.staging.local
 
 # IDE
 .vscode/
@@ -91,7 +99,7 @@ tmp/
 temp/
 
 # Docker
-.dockerignore
+# Note: .dockerignore should be committed
 
 # Database
 *.sqlite

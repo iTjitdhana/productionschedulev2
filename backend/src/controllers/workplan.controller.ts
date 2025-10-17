@@ -91,32 +91,65 @@ export async function getWorkPlanById(req: Request, res: Response): Promise<void
 /**
  * GET /api/health
  * Health check endpoint
+ * Reference: DEV_STANDARD.md Section 15 (Logging & Monitoring)
  */
 export async function healthCheck(req: Request, res: Response): Promise<void> {
+  const traceId = req.traceId || 'unknown';
+  const startTime = Date.now();
+  
   try {
     // Test database connection
     const pool = require('../config/database').default;
+    const dbStart = Date.now();
     const connection = await pool.getConnection();
     connection.release();
+    const dbResponseTime = Date.now() - dbStart;
 
     const healthData = {
       success: true,
-      status: 'ok',
+      status: 'healthy',
       timestamp: new Date().toISOString(),
-      uptime: process.uptime(),
-      database: 'connected',
-      environment: process.env.NODE_ENV || 'development',
+      traceId,
+      service: {
+        name: 'Production Schedule API',
+        version: '1.0.0',
+        environment: process.env.NODE_ENV || 'development',
+        uptime: Math.floor(process.uptime()),
+        memoryUsage: {
+          used: Math.round(process.memoryUsage().heapUsed / 1024 / 1024),
+          total: Math.round(process.memoryUsage().heapTotal / 1024 / 1024),
+          unit: 'MB'
+        }
+      },
+      database: {
+        status: 'connected',
+        responseTime: `${dbResponseTime}ms`,
+        host: process.env.DB_HOST,
+        name: process.env.DB_NAME
+      },
+      responseTime: `${Date.now() - startTime}ms`
     };
 
+    logger.info(`[${traceId}] Health check: OK (${dbResponseTime}ms DB response)`);
     res.status(200).json(healthData);
   } catch (error: any) {
-    logger.error('Health check failed:', error);
-    res.status(500).json({
+    logger.error(`[${traceId}] Health check failed:`, error);
+    res.status(503).json({
       success: false,
-      status: 'error',
+      status: 'unhealthy',
       timestamp: new Date().toISOString(),
-      database: 'disconnected',
-      message: error.message,
+      traceId,
+      service: {
+        name: 'Production Schedule API',
+        version: '1.0.0',
+        environment: process.env.NODE_ENV || 'development',
+        uptime: Math.floor(process.uptime()),
+      },
+      database: {
+        status: 'disconnected',
+        error: error.message,
+      },
+      responseTime: `${Date.now() - startTime}ms`
     });
   }
 }
