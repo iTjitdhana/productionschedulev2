@@ -1,4 +1,4 @@
-# JavaScript Backend Dockerfile (no TypeScript compilation)
+# TypeScript Backend Dockerfile
 FROM node:18-alpine
 
 WORKDIR /app
@@ -9,15 +9,18 @@ RUN corepack enable pnpm
 # Copy package files
 COPY package*.json pnpm-lock.yaml* ./
 
-# Install dependencies
+# Install ALL dependencies (including dev dependencies for TypeScript)
 RUN \
-  if [ -f pnpm-lock.yaml ]; then pnpm i --prod --no-frozen-lockfile; \
-  elif [ -f package-lock.json ]; then npm ci --omit=dev; \
-  else npm install --omit=dev; \
+  if [ -f pnpm-lock.yaml ]; then pnpm i --no-frozen-lockfile; \
+  elif [ -f package-lock.json ]; then npm ci; \
+  else npm install; \
   fi
 
 # Copy source code
 COPY . .
+
+# Build TypeScript
+RUN npm run build
 
 # Create non-root user
 RUN addgroup --system --gid 1001 nodejs
@@ -33,5 +36,5 @@ EXPOSE 3107
 ENV PORT=3107
 ENV NODE_ENV=production
 
-# Use node directly with JavaScript files
-CMD ["node", "src/index.js"]
+# Use compiled JavaScript
+CMD ["npm", "start"]
