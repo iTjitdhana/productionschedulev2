@@ -33,12 +33,13 @@ export async function fetchWorkPlans(date: string): Promise<WorkPlan[]> {
       ORDER BY wp.start_time;
     `, [date]);
 
-    if (workPlanRows.length === 0) {
+    const workPlanRowsArray = workPlanRows as WorkPlanRow[];
+    if (workPlanRowsArray.length === 0) {
       return [];
     }
 
     // Get work_plan_ids
-    const workPlanIds = workPlanRows.map(row => row.id);
+    const workPlanIds = workPlanRowsArray.map(row => row.id);
 
     // Query operators - JOIN with users using id_code (NOT user_id!)
     const [operatorRows] = await pool.query(`
@@ -57,8 +58,9 @@ export async function fetchWorkPlans(date: string): Promise<WorkPlan[]> {
     `, [workPlanIds]);
 
     // Debug: Log operator data
-    logger.debug(`Found ${operatorRows.length} operator assignments:`, 
-      operatorRows.map(row => ({
+    const operatorRowsArray = operatorRows as OperatorRow[];
+    logger.debug(`Found ${operatorRowsArray.length} operator assignments:`, 
+      operatorRowsArray.map(row => ({
         work_plan_id: row.work_plan_id,
         id_code: row.id_code,
         user_name: row.user_name,
@@ -77,7 +79,7 @@ export async function fetchWorkPlans(date: string): Promise<WorkPlan[]> {
 
     // Group operators by work_plan_id
     const operatorsByPlan = new Map<number, Assignee[]>();
-    operatorRows.forEach(row => {
+    operatorRowsArray.forEach(row => {
       if (!operatorsByPlan.has(row.work_plan_id)) {
         operatorsByPlan.set(row.work_plan_id, []);
       }
@@ -102,7 +104,7 @@ export async function fetchWorkPlans(date: string): Promise<WorkPlan[]> {
 
     // Phase 2: Fetch process steps for each work plan
     const workPlansWithSteps = await Promise.all(
-      workPlanRows.map(async (row) => {
+      workPlanRowsArray.map(async (row) => {
         const { hasSteps, steps } = await fetchAndProcessSteps(row);
         
         return {
@@ -163,11 +165,12 @@ export async function fetchWorkPlanById(id: number): Promise<WorkPlan | null> {
       WHERE wp.id = ?;
     `, [id]);
 
-    if (workPlanRows.length === 0) {
+    const workPlanRowsArray = workPlanRows as WorkPlanRow[];
+    if (workPlanRowsArray.length === 0) {
       return null;
     }
 
-    const row = workPlanRows[0];
+    const row = workPlanRowsArray[0];
 
     // Query operators
     const [operatorRows] = await pool.query(`
@@ -185,7 +188,8 @@ export async function fetchWorkPlanById(id: number): Promise<WorkPlan | null> {
       ORDER BY wpo.id;
     `, [id]);
 
-    const assignees: Assignee[] = operatorRows.map(op => ({
+    const operatorRowsArray = operatorRows as OperatorRow[];
+    const assignees: Assignee[] = operatorRowsArray.map(op => ({
       id_code: op.id_code,
       name: op.user_name || op.id_code,
       avatar: '',
@@ -258,9 +262,10 @@ export async function fetchProcessTemplates(jobCode: string): Promise<ProcessTem
       ORDER BY pt.process_number;
     `, [jobCode]);
 
-    if (templates.length > 0) {
-      logger.debug(`Found ${templates.length} templates for direct match job_code: ${jobCode}`);
-      return templates;
+    const templatesArray = templates as ProcessTemplateRow[];
+    if (templatesArray.length > 0) {
+      logger.debug(`Found ${templatesArray.length} templates for direct match job_code: ${jobCode}`);
+      return templatesArray;
     }
 
     // Step 2: Try mapping via products table (job_code might be job_name)
@@ -362,20 +367,21 @@ export async function fetchProcessTemplates(jobCode: string): Promise<ProcessTem
           ORDER BY pt.process_number;
         `, [product.product_code]);
 
-        if (mappedTemplates.length > 0) {
+        const mappedTemplatesArray = mappedTemplates as ProcessTemplateRow[];
+        if (mappedTemplatesArray.length > 0) {
           // Debug: ตรวจสอบเฉพาะ "กุ้งทอดมัน"
           if (jobCode.includes('กุ้งทอดมัน')) {
-            logger.debug(`🐛 DEBUG กุ้งทอดมัน: Found ${mappedTemplates.length} templates for product_code: ${product.product_code}`);
-            logger.debug(`🐛 Templates:`, mappedTemplates.map(t => ({
+            logger.debug(`🐛 DEBUG กุ้งทอดมัน: Found ${mappedTemplatesArray.length} templates for product_code: ${product.product_code}`);
+            logger.debug(`🐛 Templates:`, mappedTemplatesArray.map(t => ({
               process_number: t.process_number,
               duration: t.estimated_duration_minutes,
               is_active: t.is_active,
               version: t.version
             })));
           } else {
-            logger.debug(`Found ${mappedTemplates.length} templates for mapped product_code: ${product.product_code} (from job_code: ${jobCode})`);
+            logger.debug(`Found ${mappedTemplatesArray.length} templates for mapped product_code: ${product.product_code} (from job_code: ${jobCode})`);
           }
-          return mappedTemplates;
+          return mappedTemplatesArray;
         }
       }
     }
