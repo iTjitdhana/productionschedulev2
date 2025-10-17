@@ -22,7 +22,7 @@ services:
       - PORT=3107
       - DB_HOST=192.168.0.96
       - DB_USER=jitdhana
-      - DB_PASSWORD=Jitdana@2025
+      - DB_PASSWORD=iT12345$
       - DB_NAME=manufacturing_system
       - DB_PORT=3306
       - DB_TIMEZONE=+07:00
