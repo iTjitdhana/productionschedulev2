@@ -35,17 +35,14 @@ services:
       context: ../backend
       dockerfile: Dockerfile.js
     container_name: production-schedule-backend
-    ports:
-      - "3109:3107"  # External:Internal - เปลี่ยนเป็น 3109
+    network_mode: "host"  # ใช้ host network เพื่อเชื่อมต่อ DB ด้วย IP ของ host
     env_file:
       - ../backend/.env.production
     environment:
       - NODE_ENV=production
     restart: always
-    networks:
-      - prod-network
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:3107/api/health"]
+      test: ["CMD", "curl", "-f", "http://localhost:3109/api/health"]
       interval: 30s
       timeout: 10s
       retries: 3
@@ -99,3 +96,6 @@ networks:
 # Frontend: http://SERVER_IP:3019
 # Backend API: http://SERVER_IP:3109/api/
 # Health Check: http://SERVER_IP:3109/api/health
+#
+# Note: Backend uses host network to access MySQL with host IP
+# Backend internal port must be set to 3109 in backend/.env.production
