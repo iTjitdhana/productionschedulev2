@@ -1,0 +1,217 @@
+# Cursor AI Rules for Production Schedule V2 Project
+
+## 🎯 Project Context
+This is a Production Schedule System for manufacturing operations.
+- **Stack:** Next.js 15, React 19, TypeScript, Express.js, MySQL
+- **Deployment:** Docker Compose on Linux Server (LAN)
+- **Database:** MySQL 8.0 external to Docker
+- **Standard:** Follow DEV_STANDARD.md strictly
+
+---
+
+## ⚠️ CRITICAL RULES - MUST FOLLOW
+
+### 1. NO HARDCODING
+- ❌ **NEVER** hardcode URL, IP, password, API key, secret, or any config value
+- ✅ **ALWAYS** use environment variables from `.env` files
+- ✅ **ALWAYS** validate ENV variables and throw error if missing
+
+### 2. Environment Files
+- ✅ **MUST** create `.env.example` that can be committed (no real credentials)
+- ❌ **NEVER** commit `.env.development` or `.env.production`
+- ✅ **ALWAYS** use `process.env.VARIABLE_NAME` (backend) or `process.env.NEXT_PUBLIC_*` (frontend)
+
+### 3. Dependencies Selection
+- ✅ **PREFER** Node.js built-in modules (e.g., `crypto.randomUUID()` instead of `uuid`)
+- ⚠️ **AVOID** packages with ESM/CommonJS conflicts
+- ✅ **CHECK** if package is compatible before installing
+
+### 4. Docker Networking
+- ✅ **USE** `network_mode: "host"` for backend when connecting to external MySQL
+- ✅ **REASON:** Avoids Docker IP permission issues with database
+- ⚠️ **NOTE:** Backend PORT must match external port when using host network
+
+### 5. Git Workflow
+- ✅ **USE** Conventional Commits: `feat:`, `fix:`, `chore:`, `docs:`
+- ✅ **CREATE** git tag for every deployment: `git tag v1.x.x`
+- ✅ **COMMIT** message in Thai or English with clear description
+
+---
+
+## 📚 Required Reading
+
+Before making ANY changes, you MUST:
+1. ✅ Read `DEV_STANDARD.md` sections 1-27
+2. ✅ Check existing `.env.example` files
+3. ✅ Review `infra/docker-compose.prod.yml` for deployment config
+4. ✅ Check `README.md` for project-specific setup
+
+---
+
+## 🔧 Common Tasks Patterns
+
+### Adding New Feature
+1. Create feature branch: `git checkout -b feature/feature-name`
+2. Write code WITHOUT hardcoding
+3. Update `.env.example` if new ENV variables added
+4. Test locally
+5. Commit with conventional message
+6. Create Pull Request
+
+### Adding New Environment Variable
+1. Add to `.env.example` with placeholder value
+2. Add to `backend/.env.example` (if backend)
+3. Update code to read from `process.env.VAR_NAME`
+4. Validate that variable exists (throw error if missing)
+5. Update README.md with new variable documentation
+
+### Installing New Package
+1. Check if Node.js built-in can be used instead
+2. Verify package is CommonJS compatible (if using TypeScript with CommonJS target)
+3. Check bundle size and security vulnerabilities
+4. Document why this package is needed
+
+---
+
+## 🚫 Common Mistakes to AVOID
+
+### ❌ DON'T DO THIS:
+```typescript
+// ❌ Hardcode URL
+const API_URL = 'http://192.168.0.96:3107';
+
+// ❌ Hardcode credentials
+const dbConfig = {
+  host: '192.168.0.96',
+  user: 'jitdhana',
+  password: 'secret123'
+};
+
+// ❌ Use ESM-only packages
+import { v4 as uuidv4 } from 'uuid'; // uuid v9+ is ESM only
+```
+
+### ✅ DO THIS INSTEAD:
+```typescript
+// ✅ Use ENV variables
+const API_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
+if (!API_URL) throw new Error('NEXT_PUBLIC_API_BASE_URL is required');
+
+// ✅ Read from ENV with validation
+const dbConfig = {
+  host: process.env.DB_HOST!,
+  user: process.env.DB_USER!,
+  password: process.env.DB_PASSWORD!
+};
+
+// Validate
+if (!process.env.DB_HOST) {
+  throw new Error('Missing required ENV: DB_HOST');
+}
+
+// ✅ Use Node.js built-in
+import crypto from 'crypto';
+const id = crypto.randomUUID();
+```
+
+---
+
+## 🐳 Docker Deployment Pattern
+
+### Backend with External MySQL
+```yaml
+services:
+  backend:
+    network_mode: "host"  # ✅ Required for external DB
+    env_file:
+      - ../backend/.env.production
+    # Note: PORT in .env must match host port
+```
+
+### Frontend
+```yaml
+services:
+  frontend:
+    ports:
+      - "3019:3017"  # External:Internal
+    env_file:
+      - ../.env.production
+```
+
+---
+
+## 📝 Code Review Checklist
+
+Before submitting code, verify:
+- [ ] No hardcoded values (URL, IP, password, etc.)
+- [ ] All configs come from ENV variables
+- [ ] ENV variables are validated (throw error if missing)
+- [ ] `.env.example` updated if new variables added
+- [ ] No real credentials in `.env.example`
+- [ ] Docker compose uses host network for backend
+- [ ] Conventional commit message used
+- [ ] Code follows TypeScript best practices
+- [ ] No console.log in production code (use logger)
+
+---
+
+## 🔍 Troubleshooting Guide
+
+### "Cannot find .env.example"
+- Create `.env.example` with placeholder values
+- Ensure it's NOT in `.gitignore`
+- Commit it to Git
+
+### "UUID ESM import error"
+- Use `crypto.randomUUID()` instead
+- Remove `uuid` from dependencies
+
+### "Database connection refused"
+- Check if backend uses `network_mode: "host"`
+- Verify DB_HOST in `.env.production`
+- Test connection: `docker exec -it container-name sh`
+
+### "Port already allocated"
+- Check: `docker ps --format "table {{.Names}}\t{{.Ports}}"`
+- Change ports in `docker-compose.prod.yml`
+- Update PORT in `.env.production` to match
+
+---
+
+## 📊 Memory Preferences
+
+Remember these user preferences:
+- User prefers Thai language for commit messages and documentation
+- System is for LAN deployment (not public internet)
+- Backend uses host network due to MySQL permissions
+- Ports: Frontend 3019, Backend 3109
+- Database: MySQL at 192.168.0.96
+
+---
+
+## 🎓 Learning Resources
+
+- DEV_STANDARD.md: Full development standard (sections 1-27)
+- DEV_STANDARD_ADDITIONS.md: Lessons learned from deployment
+- IMPLEMENTATION_REPORT.md: Detailed setup report
+- README.md: Project documentation
+
+---
+
+## ✅ Success Criteria
+
+Code is acceptable when:
+1. ✅ No hardcoded values anywhere
+2. ✅ All configs from ENV with validation
+3. ✅ `.env.example` exists and can be committed
+4. ✅ Docker compose uses correct network mode
+5. ✅ Follows DEV_STANDARD.md guidelines
+6. ✅ Can be deployed with single command
+7. ✅ Can be rolled back via git tag
+
+---
+
+**Last Updated:** 2025-10-17  
+**Project:** Production Schedule V2  
+**Version:** 1.4.0+
+
